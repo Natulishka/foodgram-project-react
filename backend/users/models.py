@@ -7,10 +7,12 @@ from rest_framework.authtoken.models import Token
 class CustomUserManager(BaseUserManager):
     '''
     При создании суперпользователя проставляет пользовательскую роль admin,
-    не позволяет создать пользователя с username me, поля email, first_name, last_name
-    обязательны для заполнения. Для суперпользователя генерируется токен.
+    не позволяет создать пользователя с username me, поля email, first_name,
+    last_name обязательны для заполнения. Для суперпользователя генерируется
+    токен.
     '''
-    def create_user(self, username, email, password, first_name, last_name, superuser=False, **extra_fields):
+    def create_user(self, username, email, password, first_name, last_name,
+                    superuser=False, **extra_fields):
         if not email:
             raise ValueError(_('The Email must be set'))
         if not username:
@@ -29,12 +31,13 @@ class CustomUserManager(BaseUserManager):
                           **extra_fields)
         user.set_password(password)
         user.save()
-        if superuser == True:
+        if superuser is True:
             token = Token.objects.create(user=user)
             print('Token ' + token.key)
         return user
 
-    def create_superuser(self, username, email, password, first_name, last_name, **extra_fields):
+    def create_superuser(self, username, email, password, first_name,
+                         last_name, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -43,7 +46,8 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError(_('Superuser must have is_superuser=True.'))
         superuser = True
-        return self.create_user(username, email, password, first_name, last_name, superuser, **extra_fields)
+        return self.create_user(username, email, password, first_name,
+                                last_name, superuser, **extra_fields)
 
 
 class User(AbstractUser):
@@ -60,15 +64,11 @@ class User(AbstractUser):
     last_name = models.CharField(
         _('last name'),
         max_length=150)
-    # is_subscribed = models.BooleanField(
-    #     _('is subscribed'),
-    #     default=False,
-    # )
-    
+
     objects = CustomUserManager()
-    
+
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'is_subscribed']
     USERNAME_FIELD = 'email'
-    
+
     class Meta:
         ordering = ['pk']

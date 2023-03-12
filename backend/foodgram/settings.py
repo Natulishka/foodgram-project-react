@@ -117,8 +117,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
-
-
 CORS_URLS_REGEX = r'^/api/.*$'
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
@@ -129,7 +127,7 @@ REST_FRAMEWORK = {
         'api.pagination.LimitPageNumberPagination',
     'PAGE_SIZE': 6,
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly', 
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
        'rest_framework.authentication.TokenAuthentication',
@@ -137,7 +135,7 @@ REST_FRAMEWORK = {
    ),
 }
 
-AUTH_USER_MODEL='users.User'
+AUTH_USER_MODEL = 'users.User'
 
 
 DJOSER = {
@@ -176,9 +174,3 @@ DJOSER = {
     # 'token_create': ['rest_framework.permissions.AllowAny'], +
     # 'token_destroy': ['rest_framework.permissions.IsAuthenticated'], +
 }}
-
-
-# AUTHENTICATION_BACKENDS = (
-#    "django.contrib.auth.backends.ModelBackend",
-#    "allauth.account.auth_backends.AuthenticationBackend"
-# )
