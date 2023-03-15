@@ -67,7 +67,7 @@ class User(AbstractUser):
 
     objects = CustomUserManager()
 
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'is_subscribed']
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
     USERNAME_FIELD = 'email'
 
     class Meta:

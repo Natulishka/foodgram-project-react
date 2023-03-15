@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets
-from rest_framework.permissions import AllowAny
+from rest_framework import filters, viewsets
 
-from api.serializers import IngredientsSerializer, TagsSerializer
-from recipes.models import Ingredient, Tag
+from api.permissions import IsAuthorOrAdminOrReadOnly
+from api.serializers import (IngredientsSerializer, RecipesPostSerializer,
+                             RecipesSerializer, TagsSerializer)
+from recipes.models import Ingredient, Recipe, Tag
 
 User = get_user_model()
 
@@ -23,3 +23,20 @@ class TagsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagsSerializer
     pagination_class = None
+    ordering = ('name',)
+
+
+class RecipesViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipesSerializer
+    permission_classes = (IsAuthorOrAdminOrReadOnly,)
+    ordering = ('-pub_date')
+
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'partial_update']:
+            return RecipesPostSerializer
+        return RecipesSerializer

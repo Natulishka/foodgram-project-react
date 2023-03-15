@@ -132,7 +132,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
        'rest_framework.authentication.TokenAuthentication',
        'rest_framework.authentication.SessionAuthentication',
-   ),
+    ),
 }
 
 AUTH_USER_MODEL = 'users.User'
@@ -174,3 +174,9 @@ DJOSER = {
     # 'token_create': ['rest_framework.permissions.AllowAny'], +
     # 'token_destroy': ['rest_framework.permissions.IsAuthenticated'], +
 }}
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
