@@ -78,3 +78,23 @@ class TagRecipe(models.Model):
 
     def __str__(self):
         return f'{self.tag} {self.recipe}'
+
+
+class Subscription(models.Model):
+    subscriber = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscriber'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='author'
+    )
+
+    class Meta:
+        ordering = ['author']
+        constraints = [
+            models.UniqueConstraint(fields=['subscriber', 'author'],
+                                    name='unique subscriber author')
+        ]

@@ -1,13 +1,14 @@
 import base64
-from collections import OrderedDict
 
 import webcolors
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
+from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
-from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag, TagRecipe
+from recipes.models import (Ingredient, IngredientRecipe, Recipe, Subscription,
+                            Tag, TagRecipe)
 
 User = get_user_model()
 
@@ -29,8 +30,23 @@ class Hex2NameColor(serializers.Field):
         try:
             data = webcolors.hex_to_name(data)
         except ValueError:
-            raise serializers.ValidationError('Для этого цвета нет имени')
+            raise serializers.ValidationError('Для этого цвета нет имени!')
         return data
+
+
+class CustomUserSerializer(UserSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed')
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        return Subscription.objects.filter(author=obj,
+                                           subscriber=request.user
+                                           ).exists()
 
 
 class IngredientsSerializer(serializers.ModelSerializer):
@@ -90,9 +106,12 @@ class RecipesSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image',
                   'text', 'cooking_time')
 
-    # def get_ingredients(self, obj):
-        
-    #     return obj.name
+
+class RecipesSubscriptionsSerializer(RecipesSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class RecipesPostSerializer(RecipesSerializer):
@@ -140,4 +159,75 @@ class RecipesPostSerializer(RecipesSerializer):
 
     def to_representation(self, instance):
         serializer = RecipesSerializer(instance)
+        return serializer.data
+
+
+class SubscriptionSerializer(CustomUserSerializer):
+    id = serializers.IntegerField(source='author_id')
+    email = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
+    first_name = serializers.SerializerMethodField()
+    last_name = serializers.SerializerMethodField()
+    is_subscribed = serializers.BooleanField(default=True)
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Subscription
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed', 'recipes', 'recipes_count')
+
+    def get_id(self, obj):
+        return obj.author.id
+
+    def get_email(self, obj):
+        return obj.author.email
+
+    def get_username(self, obj):
+        return obj.author.username
+
+    def get_first_name(self, obj):
+        return obj.author.first_name
+
+    def get_last_name(self, obj):
+        return obj.author.last_name
+
+    def get_recipes(self, obj):
+        request = self.context.get('request')
+        recipes_limit = request.GET.get("recipes_limit")
+        recipes = obj.author.recipes.all()
+        if recipes_limit:
+            recipes = recipes[:int(recipes_limit)]
+        return RecipesSubscriptionsSerializer(recipes, many=True).data
+
+    def get_recipes_count(self, obj):
+        return obj.author.recipes.count()
+
+
+class SubscribeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = ()
+        model = Subscription
+
+    def validate(self, data):
+        request = self.context.get('request')
+        author = get_object_or_404(
+            User,
+            pk=self.context.get('view').kwargs.get('id')
+        )
+        subscriber = request.user
+        if request.method == 'POST':
+            if author == subscriber:
+                raise serializers.ValidationError(
+                    'Нельзя подписаться на самого себя!')
+            if Subscription.objects.filter(author=author,
+                                           subscriber=subscriber
+                                           ).exists():
+                raise serializers.ValidationError(
+                    'Вы уже подписаны на этого автора!')
+        return data
+
+    def to_representation(self, instance):
+        serializer = SubscriptionSerializer(instance)
         return serializer.data

@@ -170,10 +170,12 @@ DJOSER = {
     # 'user': ['rest_framework.permissions.CurrentUserOrAdmin'],
     'user': ['rest_framework.permissions.IsAuthenticated'],
     # 'user_list': ['rest_framework.permissions.CurrentUserOrAdmin'],
-    'user_list': ['rest_framework.permissions.AllowAny'],
+    'user_list': ['rest_framework.permissions.IsAuthenticated'],
     # 'token_create': ['rest_framework.permissions.AllowAny'], +
     # 'token_destroy': ['rest_framework.permissions.IsAuthenticated'], +
-}}
+},
+    'SERIALIZERS': {'user': 'api.serializers.CustomUserSerializer'}
+}
 
 
 MEDIA_URL = '/media/'
