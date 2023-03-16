@@ -6,11 +6,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api.permissions import IsAuthorOrAdminOrReadOnly
-from api.serializers import (IngredientsSerializer, RecipesPostSerializer,
-                             RecipesSerializer, SubscribeSerializer,
-                             SubscriptionSerializer, TagsSerializer)
+from api.serializers import (FavoriteSerializer, IngredientsSerializer,
+                             RecipesPostSerializer, RecipesSerializer,
+                             SubscribeSerializer, SubscriptionSerializer,
+                             TagsSerializer)
 from api.viewsets import CreateDestroyViewSet, ListViewSet
-from recipes.models import Ingredient, Recipe, Subscription, Tag
+from recipes.models import Favorite, Ingredient, Recipe, Subscription, Tag
 
 User = get_user_model()
 
@@ -48,7 +49,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 
 class SubscriptionsViewSet(ListViewSet):
-    # queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
     permission_classes = (IsAuthenticated,)
     ordering = ('author',)
@@ -61,6 +61,7 @@ class SubscribeViewSet(CreateDestroyViewSet):
     queryset = Subscription.objects.all()
     serializer_class = SubscribeSerializer
     permission_classes = (IsAuthenticated,)
+    ordering = ('author',)
 
     def get_object(self):
         return get_object_or_404(Subscription, subscriber=self.request.user,
@@ -80,6 +81,36 @@ class SubscribeViewSet(CreateDestroyViewSet):
                   author=author,
                   subscriber=subscriber).exists():
             return Response(['Вы не подписаны на этого автора!'],
+                            status=status.HTTP_400_BAD_REQUEST)
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class FavoriteViewSet(CreateDestroyViewSet):
+    queryset = Favorite.objects.all()
+    serializer_class = FavoriteSerializer
+    permission_classes = (IsAuthenticated,)
+    ordering = ('recipe',)
+
+    def get_object(self):
+        return get_object_or_404(Favorite, user=self.request.user,
+                                 recipe=self.kwargs['id'])
+
+    def perform_create(self, serializer):
+        recipe = get_object_or_404(Recipe, id=self.kwargs['id'])
+        serializer.save(user=self.request.user, recipe=recipe)
+
+    def destroy(self, request, *args, **kwargs):
+        recipe = get_object_or_404(
+            Recipe,
+            pk=self.kwargs['id']
+        )
+        user = request.user
+        if not Favorite.objects.filter(
+                  user=user,
+                  recipe=recipe).exists():
+            return Response(['Этого рецепта нет в избранном!'],
                             status=status.HTTP_400_BAD_REQUEST)
         instance = self.get_object()
         self.perform_destroy(instance)

@@ -7,8 +7,8 @@ from django.shortcuts import get_object_or_404
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
-from recipes.models import (Ingredient, IngredientRecipe, Recipe, Subscription,
-                            Tag, TagRecipe)
+from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
+                            Subscription, Tag, TagRecipe)
 
 User = get_user_model()
 
@@ -97,17 +97,25 @@ class RecipesSerializer(serializers.ModelSerializer):
         slug_field='username',
         default=serializers.CurrentUserDefault())
     image = Base64ImageField()
+    is_favorited = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
         # fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
         #           'name', 'is_in_shopping_cart', 'image', 'text',
         #           'cooking_time')
-        fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image',
-                  'text', 'cooking_time')
+        fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
+                  'name', 'image', 'text',
+                  'cooking_time')
+
+    def get_is_favorited(self, obj):
+        request = self.context.get('request')
+        return Favorite.objects.filter(recipe=obj,
+                                       user=request.user
+                                       ).exists()
 
 
-class RecipesSubscriptionsSerializer(RecipesSerializer):
+class RecipesShortSerializer(RecipesSerializer):
 
     class Meta:
         model = Recipe
@@ -177,8 +185,8 @@ class SubscriptionSerializer(CustomUserSerializer):
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count')
 
-    def get_id(self, obj):
-        return obj.author.id
+    # def get_id(self, obj):
+    #     return obj.author.id
 
     def get_email(self, obj):
         return obj.author.email
@@ -198,7 +206,7 @@ class SubscriptionSerializer(CustomUserSerializer):
         recipes = obj.author.recipes.all()
         if recipes_limit:
             recipes = recipes[:int(recipes_limit)]
-        return RecipesSubscriptionsSerializer(recipes, many=True).data
+        return RecipesShortSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
         return obj.author.recipes.count()
@@ -230,4 +238,33 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         serializer = SubscriptionSerializer(instance)
+        return serializer.data
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = ()
+        model = Favorite
+
+    def validate(self, data):
+        request = self.context.get('request')
+        recipe = get_object_or_404(
+            Recipe,
+            pk=self.context.get('view').kwargs.get('id')
+        )
+        user = request.user
+        if (request.method == 'POST' and
+            Favorite.objects.filter(recipe=recipe,
+                                    user=user).exists()):
+            raise serializers.ValidationError(
+                'Этот рецепт уже есть в избранном!')
+        return data
+
+    def to_representation(self, instance):
+        recipe = get_object_or_404(
+            Recipe,
+            pk=instance.recipe.id
+        )
+        serializer = RecipesShortSerializer(recipe)
         return serializer.data

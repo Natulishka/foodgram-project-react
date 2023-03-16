@@ -98,3 +98,23 @@ class Subscription(models.Model):
             models.UniqueConstraint(fields=['subscriber', 'author'],
                                     name='unique subscriber author')
         ]
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='user'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='recipe'
+    )
+
+    class Meta:
+        ordering = ['user']
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique user recipe')
+        ]
