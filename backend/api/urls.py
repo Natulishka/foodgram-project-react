@@ -1,8 +1,10 @@
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
-from api.views import (FavoriteViewSet, IngridientsViewSet, RecipesViewSet,
-                       SubscribeViewSet, SubscriptionsViewSet, TagsViewSet)
+from api.views import (ChoppingCartViewSet, FavoriteViewSet,
+                       IngridientsViewSet, RecipesViewSet, SubscribeViewSet,
+                       SubscriptionsViewSet, TagsViewSet,
+                       download_shopping_cart_view)
 
 app_name = 'api'
 
@@ -19,8 +21,14 @@ urlpatterns = [
          SubscribeViewSet.as_view({
              'post': 'create',
              'delete': 'destroy'})),
+    path('recipes/download_shopping_cart/',
+         download_shopping_cart_view),
     path('recipes/<int:id>/favorite/',
          FavoriteViewSet.as_view({
+             'post': 'create',
+             'delete': 'destroy'})),
+    path('recipes/<int:id>/shopping_cart/',
+         ChoppingCartViewSet.as_view({
              'post': 'create',
              'delete': 'destroy'})),
     path('auth/', include('djoser.urls.authtoken')),

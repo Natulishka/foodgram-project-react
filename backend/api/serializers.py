@@ -7,8 +7,9 @@ from django.shortcuts import get_object_or_404
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
-from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
-                            Subscription, Tag, TagRecipe)
+from recipes.models import (ChoppingCart, Favorite, Ingredient,
+                            IngredientRecipe, Recipe, Subscription, Tag,
+                            TagRecipe)
 
 User = get_user_model()
 
@@ -98,14 +99,12 @@ class RecipesSerializer(serializers.ModelSerializer):
         default=serializers.CurrentUserDefault())
     image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
-        # fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
-        #           'name', 'is_in_shopping_cart', 'image', 'text',
-        #           'cooking_time')
         fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
-                  'name', 'image', 'text',
+                  'name', 'is_in_shopping_cart', 'image', 'text',
                   'cooking_time')
 
     def get_is_favorited(self, obj):
@@ -113,6 +112,12 @@ class RecipesSerializer(serializers.ModelSerializer):
         return Favorite.objects.filter(recipe=obj,
                                        user=request.user
                                        ).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        request = self.context.get('request')
+        return ChoppingCart.objects.filter(recipe=obj,
+                                           user=request.user
+                                           ).exists()
 
 
 class RecipesShortSerializer(RecipesSerializer):
@@ -268,3 +273,45 @@ class FavoriteSerializer(serializers.ModelSerializer):
         )
         serializer = RecipesShortSerializer(recipe)
         return serializer.data
+
+
+class ChoppingCartSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = ()
+        model = ChoppingCart
+
+    def validate(self, data):
+        request = self.context.get('request')
+        recipe = get_object_or_404(
+            Recipe,
+            pk=self.context.get('view').kwargs.get('id')
+        )
+        user = request.user
+        if (request.method == 'POST' and
+            ChoppingCart.objects.filter(recipe=recipe,
+                                        user=user).exists()):
+            raise serializers.ValidationError(
+                'Этот рецепт уже есть в списке покупок!')
+        return data
+
+    def to_representation(self, instance):
+        recipe = get_object_or_404(
+            Recipe,
+            pk=instance.recipe.id
+        )
+        serializer = RecipesShortSerializer(recipe)
+        return serializer.data
+
+
+# class DownloadShoppingCartSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         fields = ()
+#         model = ChoppingCart
+
+#     def to_representation(self, instance):
+#         ingredients = IngredientRecipe.objects.filter(recipe=instance.recipe)
+#         print(ingredients)
+#         serializer = IngredientRecipeSerializer(ingredients)
+#         return serializer.data

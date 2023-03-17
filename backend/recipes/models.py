@@ -44,10 +44,6 @@ class Recipe(models.Model):
     cooking_time = models.IntegerField(validators=[MinValueValidator(1)])
     image = models.ImageField(upload_to='recipes/images/')
     tags = models.ManyToManyField(Tag, through='TagRecipe')
-    # ingredients = models.ManyToManyField(Ingredient,
-    #                                      through='IngredientRecipe')
-    # ingredients = models.ForeignKey(
-    #     IngredientRecipe, on_delete=models.CASCADE, related_name='recipes')
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='recipes')
 
@@ -117,4 +113,24 @@ class Favorite(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['user', 'recipe'],
                                     name='unique user recipe')
+        ]
+
+
+class ChoppingCart(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='user_ch'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='recipe_ch'
+    )
+
+    class Meta:
+        ordering = ['user']
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique user_ch recipe_ch')
         ]
