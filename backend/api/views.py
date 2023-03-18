@@ -1,5 +1,3 @@
-import os
-
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import FileResponse
@@ -16,11 +14,14 @@ from api.serializers import (ChoppingCartSerializer, FavoriteSerializer,
                              IngredientsSerializer, RecipesPostSerializer,
                              RecipesSerializer, SubscribeSerializer,
                              SubscriptionSerializer, TagsSerializer)
+from api.utils import make_file
 from api.viewsets import CreateDestroyViewSet, ListViewSet
 from recipes.models import (ChoppingCart, Favorite, Ingredient,
                             IngredientRecipe, Recipe, Subscription, Tag)
 
-FILENAME = 'chopping_cart.txt'
+FILENAME = 'chopping_cart'
+# EXT = '.txt'
+EXT = '.pdf'
 User = get_user_model()
 
 
@@ -158,25 +159,15 @@ class ChoppingCartViewSet(CreateDestroyViewSet):
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated, ))
-def download_shopping_cart_view(request):
+def download_shopping_cart_view(request, ext=EXT):
+    content_type = {'.txt': 'text/plain',
+                    '.pdf': 'application/pdf'}
     recipes = Recipe.objects.filter(recipe_ch__user=request.user)
     ingredients = IngredientRecipe.objects.filter(
         recipe__in=recipes).values(
         'ingredient__name',
         'ingredient__measurement_unit__name'
         ).annotate(amount=Sum('amount')).order_by('ingredient__name', 'amount')
-    with open(FILENAME, 'w', encoding='utf-8') as f:
-        f.write('Choping cart:' + '\n')
-        f.write('\n')
-        counter = 1
-        for ingredient in ingredients:
-            line = (f"{counter}. {ingredient['ingredient__name'].capitalize()}"
-                    f" ({ingredient['ingredient__measurement_unit__name']}) - "
-                    f"{ingredient['amount']} \n")
-            f.write(line)
-            counter += 1
-        f.write('\n')
-        f.write('\n')
-        f.write('Created by Foodgtam' + '\n')
-        f.write('Author: Shulgina Natalya')
-    return FileResponse(open(FILENAME, 'rb'), as_attachment=True)
+    make_file(FILENAME, ext, ingredients)
+    return FileResponse(open(FILENAME + ext, 'rb'), as_attachment=True,
+                        content_type=content_type[ext])
