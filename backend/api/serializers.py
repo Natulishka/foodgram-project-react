@@ -194,9 +194,6 @@ class SubscriptionSerializer(CustomUserSerializer):
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count')
 
-    # def get_id(self, obj):
-    #     return obj.author.id
-
     def get_email(self, obj):
         return obj.author.email
 

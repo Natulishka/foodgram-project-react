@@ -141,24 +141,23 @@ AUTH_USER_MODEL = 'users.User'
 
 DJOSER = {
     'HIDE_USERS': False,
-    'PERMISSIONS':
-{
-    'activation': ['api.permissions.Blocked'],
-    'password_reset': ['api.permissions.Blocked'],
-    'password_reset_confirm': ['api.permissions.Blocked'],
-    # 'set_password': ['rest_framework.permissions.CurrentUserOrAdmin'], +
-    'username_reset': ['api.permissions.Blocked'],
-    'username_reset_confirm': ['api.permissions.Blocked'],
-    'set_username': ['api.permissions.Blocked'],
-    # 'user_create': ['rest_framework.permissions.AllowAny'], +
-    'user_delete': ['api.permissions.Blocked'],
-    # 'user': ['rest_framework.permissions.CurrentUserOrAdmin'],
-    'user': ['rest_framework.permissions.IsAuthenticated'],
-    # 'user_list': ['rest_framework.permissions.CurrentUserOrAdmin'],
-    'user_list': ['rest_framework.permissions.AllowAny'],
-    # 'token_create': ['rest_framework.permissions.AllowAny'], +
-    # 'token_destroy': ['rest_framework.permissions.IsAuthenticated'], +
-},
+    'PERMISSIONS': {
+        'activation': ['api.permissions.Blocked'],
+        'password_reset': ['api.permissions.Blocked'],
+        'password_reset_confirm': ['api.permissions.Blocked'],
+        # 'set_password': ['rest_framework.permissions.CurrentUserOrAdmin'], +
+        'username_reset': ['api.permissions.Blocked'],
+        'username_reset_confirm': ['api.permissions.Blocked'],
+        'set_username': ['api.permissions.Blocked'],
+        # 'user_create': ['rest_framework.permissions.AllowAny'], +
+        'user_delete': ['api.permissions.Blocked'],
+        # 'user': ['rest_framework.permissions.CurrentUserOrAdmin'],
+        'user': ['rest_framework.permissions.IsAuthenticated'],
+        # 'user_list': ['rest_framework.permissions.CurrentUserOrAdmin'],
+        'user_list': ['rest_framework.permissions.AllowAny'],
+        # 'token_create': ['rest_framework.permissions.AllowAny'], +
+        # 'token_destroy': ['rest_framework.permissions.IsAuthenticated'], +
+    },
     'SERIALIZERS': {'user': 'api.serializers.CustomUserSerializer',
                     'current_user': 'api.serializers.CustomUserSerializer'}
 }

@@ -1,4 +1,5 @@
 import django_filters
+from django.db.models import Q
 from django_filters import rest_framework as filters
 
 from recipes.models import Favorite, Ingredient, Recipe, Tag
@@ -39,6 +40,8 @@ class RecipeFilter(filters.FilterSet):
 
 class IngredientFilter(django_filters.FilterSet):
 
-    class Meta:
-        model = Ingredient
-        fields = {'name': ['istartswith', 'icontains']}
+    name = filters.CharFilter(method='filter_name')
+
+    def filter_name(self, queryset, name, value):
+        return Ingredient.objects.filter(Q(name__istartswith=value) |
+                                         Q(name__icontains=value))

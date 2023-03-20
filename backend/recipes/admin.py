@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from recipes.models import (ChoppingCart, Favorite, Ingredient,
                             IngredientRecipe, MeasurementUnit, Recipe,
-                            Subscription, Tag)
+                            Subscription, Tag, TagRecipe)
 
 
 class MeasurementUnitAdmin(admin.ModelAdmin):
@@ -73,11 +73,12 @@ class ChoppingCartAdmin(admin.ModelAdmin):
     ordering = ('user',)
 
 
-admin.site.register(ChoppingCart, ChoppingCartAdmin)
-admin.site.register(Favorite, FavoriteAdmin)
-admin.site.register(Subscription, SubscriptionAdmin)
-admin.site.register(Recipe, RecipeAdmin)
-admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(MeasurementUnit, MeasurementUnitAdmin)
+admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Tag, TagAdmin)
+admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(IngredientRecipe, IngredientRecipeAdmin)
+admin.site.register(TagRecipe)
+admin.site.register(Subscription, SubscriptionAdmin)
+admin.site.register(Favorite, FavoriteAdmin)
+admin.site.register(ChoppingCart, ChoppingCartAdmin)
