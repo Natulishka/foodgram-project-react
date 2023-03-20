@@ -1,6 +1,7 @@
+import django_filters
 from django_filters import rest_framework as filters
 
-from recipes.models import Favorite, Recipe, Tag
+from recipes.models import Favorite, Ingredient, Recipe, Tag
 
 CHOICES = ((1, 1), (0, 0))
 
@@ -9,8 +10,6 @@ def favorite(request):
     if request is None:
         return Favorite.objects.none()
     user = request.user
-    print(11111)
-    print(Favorite.objects.filter(user=user))
     return Favorite.objects.filter(user=user)
 
 
@@ -34,5 +33,12 @@ class RecipeFilter(filters.FilterSet):
     def filter_is_in_shopping_cart(self, queryset, name, value):
         user = self.request.user
         if value == '0':
-            return Recipe.objects.exclude(recipe_ch__user=user).all()
-        return Recipe.objects.filter(recipe_ch__user=user).all()
+            return Recipe.objects.exclude(recipe_sh__user=user).all()
+        return Recipe.objects.filter(recipe_sh__user=user).all()
+
+
+class IngredientFilter(django_filters.FilterSet):
+
+    class Meta:
+        model = Ingredient
+        fields = {'name': ['istartswith', 'icontains']}

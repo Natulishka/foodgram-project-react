@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import FileResponse
@@ -8,7 +9,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from api.filters import RecipeFilter
+from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsAuthorOrAdminOrReadOnly
 from api.serializers import (ChoppingCartSerializer, FavoriteSerializer,
                              IngredientsSerializer, RecipesPostSerializer,
@@ -20,8 +21,10 @@ from recipes.models import (ChoppingCart, Favorite, Ingredient,
                             IngredientRecipe, Recipe, Subscription, Tag)
 
 FILENAME = 'chopping_cart'
-# EXT = '.txt'
-EXT = '.pdf'
+EXT = '.txt'
+# EXT = '.pdf'
+PREF = settings.MEDIA_ROOT + '/recipes/files/'
+
 User = get_user_model()
 
 
@@ -31,6 +34,7 @@ class IngridientsViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     pagination_class = None
     search_fields = ('^name',)
+    filterset_class = IngredientFilter
     ordering = ('name',)
 
 
@@ -88,9 +92,8 @@ class SubscribeViewSet(CreateDestroyViewSet):
             pk=self.kwargs['id']
         )
         subscriber = request.user
-        if not Subscription.objects.filter(
-                  author=author,
-                  subscriber=subscriber).exists():
+        if not Subscription.objects.filter(author=author,
+                                           subscriber=subscriber).exists():
             return Response(['Вы не подписаны на этого автора!'],
                             status=status.HTTP_400_BAD_REQUEST)
         instance = self.get_object()
@@ -118,9 +121,8 @@ class FavoriteViewSet(CreateDestroyViewSet):
             pk=self.kwargs['id']
         )
         user = request.user
-        if not Favorite.objects.filter(
-                  user=user,
-                  recipe=recipe).exists():
+        if not Favorite.objects.filter(user=user,
+                                       recipe=recipe).exists():
             return Response(['Этого рецепта нет в избранном!'],
                             status=status.HTTP_400_BAD_REQUEST)
         instance = self.get_object()
@@ -160,14 +162,17 @@ class ChoppingCartViewSet(CreateDestroyViewSet):
 @api_view(['GET'])
 @permission_classes((IsAuthenticated, ))
 def download_shopping_cart_view(request, ext=EXT):
+    user = '_' + request.user.username
     content_type = {'.txt': 'text/plain',
                     '.pdf': 'application/pdf'}
-    recipes = Recipe.objects.filter(recipe_ch__user=request.user)
+    recipes = Recipe.objects.filter(recipe_sh__user=request.user)
     ingredients = IngredientRecipe.objects.filter(
         recipe__in=recipes).values(
-        'ingredient__name',
-        'ingredient__measurement_unit__name'
-        ).annotate(amount=Sum('amount')).order_by('ingredient__name', 'amount')
-    make_file(FILENAME, ext, ingredients)
-    return FileResponse(open(FILENAME + ext, 'rb'), as_attachment=True,
+            'ingredient__name',
+            'ingredient__measurement_unit__name').annotate(
+                amount=Sum('amount')).order_by('ingredient__name', 'amount')
+    file = PREF + FILENAME + user
+    make_file(file, ext, ingredients)
+    return FileResponse(open(file + ext, 'rb'),
+                        as_attachment=True,
                         content_type=content_type[ext])

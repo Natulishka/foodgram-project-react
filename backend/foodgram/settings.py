@@ -131,8 +131,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
-       'rest_framework.authentication.TokenAuthentication',
-       'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
 }
 
@@ -140,22 +140,6 @@ AUTH_USER_MODEL = 'users.User'
 
 
 DJOSER = {
-#     'LOGIN_FIELD': 'email',
-#     'USER_CREATE_PASSWORD_RETYPE': True,
-#     'USERNAME_CHANGED_EMAIL_CONFIRMATION': True,
-#     'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
-#     'SEND_CONFIRMATION_EMAIL': True,
-#     'SET_USERNAME_RETYPE': True,
-#     'SET_PASSWORD_RETYPE': True,
-#     'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
-#     'USERNAME_RESET_CONFIRM_URL': 'email/reset/confirm/{uid}/{token}',
-#     'ACTIVATION_URL': 'activate/{uid}/{token}',
-#     'SEND_ACTIVATION_EMAIL': True,
-#     'SERIALIZERS': {
-#         'user_create': 'accounts.serializers.UserCreateSerializer',
-#         'user': 'accounts.serializers.UserCreateSerializer',
-#         'user_delete': 'djoser.serializers.UserDeleteSerializer',
-#     }
     'HIDE_USERS': False,
     'PERMISSIONS':
 {
@@ -171,15 +155,14 @@ DJOSER = {
     # 'user': ['rest_framework.permissions.CurrentUserOrAdmin'],
     'user': ['rest_framework.permissions.IsAuthenticated'],
     # 'user_list': ['rest_framework.permissions.CurrentUserOrAdmin'],
-    'user_list': ['rest_framework.permissions.IsAuthenticated'],
+    'user_list': ['rest_framework.permissions.AllowAny'],
     # 'token_create': ['rest_framework.permissions.AllowAny'], +
     # 'token_destroy': ['rest_framework.permissions.IsAuthenticated'], +
 },
-    'SERIALIZERS': {'user': 'api.serializers.CustomUserSerializer'}
+    'SERIALIZERS': {'user': 'api.serializers.CustomUserSerializer',
+                    'current_user': 'api.serializers.CustomUserSerializer'}
 }
 
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-

@@ -45,6 +45,8 @@ class CustomUserSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
+        if not request.user.is_authenticated:
+            return False
         return Subscription.objects.filter(author=obj,
                                            subscriber=request.user
                                            ).exists()
@@ -92,11 +94,9 @@ class TagsSerializer(serializers.ModelSerializer):
 
 class RecipesSerializer(serializers.ModelSerializer):
     tags = TagsSerializer(many=True)
-    ingredients = IngredientRecipeSerializer(many=True)
-    author = serializers.SlugRelatedField(
-        read_only=True,
-        slug_field='username',
-        default=serializers.CurrentUserDefault())
+    ingredients = IngredientRecipeSerializer(source='ingredients_recipes',
+                                             many=True)
+    author = CustomUserSerializer(default=serializers.CurrentUserDefault())
     image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -104,7 +104,7 @@ class RecipesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
-                  'name', 'is_in_shopping_cart', 'image', 'text',
+                  'is_in_shopping_cart', 'name', 'image', 'text',
                   'cooking_time')
 
     def get_is_favorited(self, obj):
@@ -136,8 +136,11 @@ class RecipesPostSerializer(RecipesSerializer):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
+        lst = []
         for tag in tags:
             TagRecipe.objects.create(tag=tag, recipe=recipe)
+            lst.append(tag)
+        recipe.tags.set(lst)
         for ingredient in ingredients:
             ingredient = dict(ingredient)
             IngredientRecipe.objects.create(
@@ -171,7 +174,8 @@ class RecipesPostSerializer(RecipesSerializer):
         return instance
 
     def to_representation(self, instance):
-        serializer = RecipesSerializer(instance)
+        request = self.context.get('request')
+        serializer = RecipesSerializer(instance, context={'request': request})
         return serializer.data
 
 
@@ -206,11 +210,12 @@ class SubscriptionSerializer(CustomUserSerializer):
         return obj.author.last_name
 
     def get_recipes(self, obj):
-        request = self.context.get('request')
-        recipes_limit = request.GET.get("recipes_limit")
         recipes = obj.author.recipes.all()
-        if recipes_limit:
-            recipes = recipes[:int(recipes_limit)]
+        request = self.context.get('request')
+        if request:
+            recipes_limit = request.GET.get("recipes_limit")
+            if recipes_limit:
+                recipes = recipes[:int(recipes_limit)]
         return RecipesShortSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
@@ -242,7 +247,9 @@ class SubscribeSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        serializer = SubscriptionSerializer(instance)
+        request = self.context.get('request')
+        serializer = SubscriptionSerializer(instance,
+                                            context={'request': request})
         return serializer.data
 
 
@@ -302,16 +309,3 @@ class ChoppingCartSerializer(serializers.ModelSerializer):
         )
         serializer = RecipesShortSerializer(recipe)
         return serializer.data
-
-
-# class DownloadShoppingCartSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         fields = ()
-#         model = ChoppingCart
-
-#     def to_representation(self, instance):
-#         ingredients = IngredientRecipe.objects.filter(recipe=instance.recipe)
-#         print(ingredients)
-#         serializer = IngredientRecipeSerializer(ingredients)
-#         return serializer.data
