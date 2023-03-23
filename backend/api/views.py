@@ -68,7 +68,9 @@ class SubscriptionsViewSet(ListViewSet):
     ordering = ('author',)
 
     def get_queryset(self):
-        return Subscription.objects.filter(subscriber=self.request.user)
+        user = self.request.user
+        return User.objects.filter(
+            id__in=user.subscriber.values('author_id'))
 
 
 class SubscribeViewSet(CreateDestroyViewSet):

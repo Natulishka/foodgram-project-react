@@ -184,34 +184,16 @@ class RecipesPostSerializer(RecipesSerializer):
 
 
 class SubscriptionSerializer(CustomUserSerializer):
-    id = serializers.IntegerField(source='author_id')
-    email = serializers.SerializerMethodField()
-    username = serializers.SerializerMethodField()
-    first_name = serializers.SerializerMethodField()
-    last_name = serializers.SerializerMethodField()
-    is_subscribed = serializers.BooleanField(default=True)
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
     class Meta:
-        model = Subscription
+        model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count')
 
-    def get_email(self, obj):
-        return obj.author.email
-
-    def get_username(self, obj):
-        return obj.author.username
-
-    def get_first_name(self, obj):
-        return obj.author.first_name
-
-    def get_last_name(self, obj):
-        return obj.author.last_name
-
     def get_recipes(self, obj):
-        recipes = obj.author.recipes.all()
+        recipes = obj.recipes.all()
         request = self.context.get('request')
         if request:
             recipes_limit = request.GET.get("recipes_limit")
@@ -220,7 +202,7 @@ class SubscriptionSerializer(CustomUserSerializer):
         return RecipesShortSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
-        return obj.author.recipes.count()
+        return obj.recipes.count()
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
@@ -249,7 +231,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         request = self.context.get('request')
-        serializer = SubscriptionSerializer(instance,
+        serializer = SubscriptionSerializer(instance.author,
                                             context={'request': request})
         return serializer.data
 

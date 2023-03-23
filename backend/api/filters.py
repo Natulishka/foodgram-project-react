@@ -14,6 +14,7 @@ def favorite(request):
 
 
 class RecipeFilter(django_filters.FilterSet):
+
     is_favorited = django_filters.ChoiceFilter(choices=CHOICES,
                                                method='filter_is_favorited')
     is_in_shopping_cart = django_filters.ChoiceFilter(

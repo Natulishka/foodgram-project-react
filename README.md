@@ -27,6 +27,7 @@ docker system prune -a
 ```
 docker rmi infra-web
 ```
-
-
+Полностью перезапустить web
+```
 docker stop infra-web-1 && docker rm infra-web-1 && docker rmi infra-web && docker-compose up -d
+```

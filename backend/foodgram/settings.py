@@ -71,12 +71,6 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
 
 DATABASES = {
     'default': {
@@ -162,7 +156,7 @@ DJOSER = {
         'username_reset_confirm': ['api.permissions.Blocked'],
         'set_username': ['api.permissions.Blocked'],
         'user_delete': ['api.permissions.Blocked'],
-        'user': ['api.permissions.IsAuthenticatedForMe'],
+        'user': ['rest_framework.permissions.IsAuthenticated'],
         'user_list': ['rest_framework.permissions.AllowAny'],
     },
     'SERIALIZERS':
