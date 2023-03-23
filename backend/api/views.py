@@ -4,7 +4,7 @@ from django.db.models import Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -21,8 +21,8 @@ from recipes.models import (ChoppingCart, Favorite, Ingredient,
                             IngredientRecipe, Recipe, Subscription, Tag)
 
 FILENAME = 'chopping_cart'
-EXT = '.txt'
-# EXT = '.pdf'
+# EXT = '.txt'
+EXT = '.pdf'
 PREF = settings.MEDIA_ROOT + '/recipes/files/'
 
 User = get_user_model()
@@ -31,9 +31,8 @@ User = get_user_model()
 class IngridientsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filter_backends = (DjangoFilterBackend,)
     pagination_class = None
-    search_fields = ('^name',)
     filterset_class = IngredientFilter
     ordering = ('name',)
 

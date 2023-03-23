@@ -30,3 +30,20 @@ class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):
             return True
         return request.user.is_authenticated and (
             request.user.is_staff or request.user == obj.author)
+
+
+class IsAuthenticatedForMe(permissions.BasePermission):
+    '''
+    Разрешение, что только пользователь, прошедший аутентификацию может 
+    получить доступ к эндпоинту users/me/.
+    '''
+    message = ('Только пользователь, прошедший аутентификацию может ' 
+               'получить доступ к эндпоинту users/me/')
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            if request.user.is_authenticated:
+                return True
+            if request.path[-4:] != '/me/':
+                return True
+        return False

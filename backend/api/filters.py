@@ -1,6 +1,5 @@
-import django_filters
-from django.db.models import Q
-from django_filters import rest_framework as filters
+from django.db.models import IntegerField, Value
+from django_filters import rest_framework as django_filters
 
 from recipes.models import Favorite, Ingredient, Recipe, Tag
 
@@ -14,16 +13,16 @@ def favorite(request):
     return Favorite.objects.filter(user=user)
 
 
-class RecipeFilter(filters.FilterSet):
-    is_favorited = filters.ChoiceFilter(choices=CHOICES,
-                                        method='filter_is_favorited')
-    is_in_shopping_cart = filters.ChoiceFilter(
+class RecipeFilter(django_filters.FilterSet):
+    is_favorited = django_filters.ChoiceFilter(choices=CHOICES,
+                                               method='filter_is_favorited')
+    is_in_shopping_cart = django_filters.ChoiceFilter(
         choices=CHOICES,
         method='filter_is_in_shopping_cart')
-    author = filters.NumberFilter(field_name='author_id')
-    tags = filters.ModelMultipleChoiceFilter(queryset=Tag.objects.all(),
-                                             field_name='tags__slug',
-                                             to_field_name='slug')
+    author = django_filters.NumberFilter(field_name='author_id')
+    tags = django_filters.ModelMultipleChoiceFilter(queryset=Tag.objects.all(),
+                                                    field_name='tags__slug',
+                                                    to_field_name='slug')
 
     def filter_is_favorited(self, queryset, name, value):
         user = self.request.user
@@ -40,8 +39,12 @@ class RecipeFilter(filters.FilterSet):
 
 class IngredientFilter(django_filters.FilterSet):
 
-    name = filters.CharFilter(method='filter_name')
+    name = django_filters.CharFilter(method='filter_name')
 
     def filter_name(self, queryset, name, value):
-        return Ingredient.objects.filter(Q(name__istartswith=value) |
-                                         Q(name__icontains=value))
+        q1 = Ingredient.objects.filter(name__istartswith=value).annotate(
+            is_first=Value(1, IntegerField()))
+        q2 = Ingredient.objects.filter(name__icontains=value).exclude(
+            name__istartswith=value).annotate(
+            is_first=Value(0, IntegerField()))
+        return q1.union(q2).order_by('-is_first', 'name')

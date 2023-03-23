@@ -1,5 +1,5 @@
 from django.urls import include, path
-from rest_framework.routers import SimpleRouter
+from rest_framework.routers import DefaultRouter
 
 from api.views import (ChoppingCartViewSet, FavoriteViewSet,
                        IngridientsViewSet, RecipesViewSet, SubscribeViewSet,
@@ -8,7 +8,7 @@ from api.views import (ChoppingCartViewSet, FavoriteViewSet,
 
 app_name = 'api'
 
-api_router = SimpleRouter()
+api_router = DefaultRouter()
 
 api_router.register('ingredients', IngridientsViewSet)
 api_router.register('tags', TagsViewSet)

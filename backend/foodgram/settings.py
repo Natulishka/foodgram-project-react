@@ -13,7 +13,7 @@ SECRET_KEY = '4i^(wq$@hz7s7m0wf#y%jstj^m-t!#8)lwjlxd)*tnap^mxh3&'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -71,10 +71,21 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
+        'NAME': os.getenv('DB_NAME', default='postgres'),
+        'USER': os.getenv('POSTGRES_USER', default='postgres'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
+        'HOST': os.getenv('DB_HOST', default='db'),
+        'PORT': os.getenv('DB_PORT', default='5432')
     }
 }
 
@@ -116,12 +127,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-
-
-CORS_URLS_REGEX = r'^/api/.*$'
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
 ]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS':
@@ -145,23 +158,14 @@ DJOSER = {
         'activation': ['api.permissions.Blocked'],
         'password_reset': ['api.permissions.Blocked'],
         'password_reset_confirm': ['api.permissions.Blocked'],
-        # 'set_password': ['rest_framework.permissions.CurrentUserOrAdmin'], +
         'username_reset': ['api.permissions.Blocked'],
         'username_reset_confirm': ['api.permissions.Blocked'],
         'set_username': ['api.permissions.Blocked'],
-        # 'user_create': ['rest_framework.permissions.AllowAny'], +
         'user_delete': ['api.permissions.Blocked'],
-        # 'user': ['rest_framework.permissions.CurrentUserOrAdmin'],
-        'user': ['rest_framework.permissions.IsAuthenticated'],
-        # 'user_list': ['rest_framework.permissions.CurrentUserOrAdmin'],
+        'user': ['api.permissions.IsAuthenticatedForMe'],
         'user_list': ['rest_framework.permissions.AllowAny'],
-        # 'token_create': ['rest_framework.permissions.AllowAny'], +
-        # 'token_destroy': ['rest_framework.permissions.IsAuthenticated'], +
     },
-    'SERIALIZERS': {'user': 'api.serializers.CustomUserSerializer',
-                    'current_user': 'api.serializers.CustomUserSerializer'}
+    'SERIALIZERS':
+        {'user': 'api.serializers.CustomUserSerializer',
+         'current_user': 'api.serializers.CustomUserSerializer'}
 }
-
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
