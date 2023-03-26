@@ -4,11 +4,11 @@ from django.db.models import Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
+from api.exceptions import BadRequestException
 from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsAuthorOrAdminOrReadOnly
 from api.serializers import (ChoppingCartSerializer, FavoriteSerializer,
@@ -19,11 +19,6 @@ from api.utils import make_file
 from api.viewsets import CreateDestroyViewSet, ListViewSet
 from recipes.models import (ChoppingCart, Favorite, Ingredient,
                             IngredientRecipe, Recipe, Subscription, Tag)
-
-FILENAME = 'chopping_cart'
-# EXT = '.txt'
-EXT = '.pdf'
-PREF = settings.MEDIA_ROOT + '/recipes/files/'
 
 User = get_user_model()
 
@@ -61,6 +56,26 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return RecipesPostSerializer
         return RecipesSerializer
 
+    @action(detail=False, methods=['get'],
+            permission_classes=[IsAuthenticated],
+            url_path='download_shopping_cart')
+    def download_shopping_cart(self, request):
+        user = '_' + request.user.username
+        content_type = {'.txt': 'text/plain',
+                        '.pdf': 'application/pdf'}
+        recipes = Recipe.objects.filter(recipe_sh__user=request.user)
+        ingredients = IngredientRecipe.objects.filter(
+            recipe__in=recipes).values(
+                'ingredient__name',
+                'ingredient__measurement_unit__name').annotate(
+                    amount=Sum('amount')).order_by('ingredient__name',
+                                                   'amount')
+        file = settings.PREF + settings.FILENAME + user
+        make_file(file, settings.EXT, ingredients)
+        return FileResponse(open(file + settings.EXT, 'rb'),
+                            as_attachment=True,
+                            content_type=content_type[settings.EXT])
+
 
 class SubscriptionsViewSet(ListViewSet):
     serializer_class = SubscriptionSerializer
@@ -80,26 +95,18 @@ class SubscribeViewSet(CreateDestroyViewSet):
     ordering = ('author',)
 
     def get_object(self):
-        return get_object_or_404(Subscription, subscriber=self.request.user,
-                                 author=self.kwargs['id'])
+        author = get_object_or_404(User, pk=self.kwargs['id'])
+        subscriber = self.request.user
+        if not Subscription.objects.filter(author=author,
+                                           subscriber=subscriber).exists():
+            raise BadRequestException(
+                {'errors': 'Вы не подписаны на этого автора!'})
+        return get_object_or_404(Subscription, subscriber=subscriber,
+                                 author=author)
 
     def perform_create(self, serializer):
         author = get_object_or_404(User, id=self.kwargs['id'])
         serializer.save(subscriber=self.request.user, author=author)
-
-    def destroy(self, request, *args, **kwargs):
-        author = get_object_or_404(
-            User,
-            pk=self.kwargs['id']
-        )
-        subscriber = request.user
-        if not Subscription.objects.filter(author=author,
-                                           subscriber=subscriber).exists():
-            return Response(['Вы не подписаны на этого автора!'],
-                            status=status.HTTP_400_BAD_REQUEST)
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class FavoriteViewSet(CreateDestroyViewSet):
@@ -109,26 +116,18 @@ class FavoriteViewSet(CreateDestroyViewSet):
     ordering = ('recipe',)
 
     def get_object(self):
-        return get_object_or_404(Favorite, user=self.request.user,
-                                 recipe=self.kwargs['id'])
+        recipe = get_object_or_404(Recipe, pk=self.kwargs['id'])
+        user = self.request.user
+        if not Favorite.objects.filter(user=user,
+                                       recipe=recipe).exists():
+            raise BadRequestException(
+                {'errors': 'Этого рецепта нет в избранном!'},)
+        return get_object_or_404(Favorite, user=user,
+                                 recipe=recipe)
 
     def perform_create(self, serializer):
         recipe = get_object_or_404(Recipe, id=self.kwargs['id'])
         serializer.save(user=self.request.user, recipe=recipe)
-
-    def destroy(self, request, *args, **kwargs):
-        recipe = get_object_or_404(
-            Recipe,
-            pk=self.kwargs['id']
-        )
-        user = request.user
-        if not Favorite.objects.filter(user=user,
-                                       recipe=recipe).exists():
-            return Response(['Этого рецепта нет в избранном!'],
-                            status=status.HTTP_400_BAD_REQUEST)
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ChoppingCartViewSet(CreateDestroyViewSet):
@@ -138,42 +137,15 @@ class ChoppingCartViewSet(CreateDestroyViewSet):
     ordering = ('recipe',)
 
     def get_object(self):
-        return get_object_or_404(ChoppingCart, user=self.request.user,
-                                 recipe=self.kwargs['id'])
+        recipe = get_object_or_404(Recipe, pk=self.kwargs['id'])
+        user = self.request.user
+        if not ChoppingCart.objects.filter(user=user,
+                                           recipe=recipe).exists():
+            raise BadRequestException(
+                {'errors': 'Этого рецепта нет в списке покупок!'})
+        return get_object_or_404(ChoppingCart, user=user,
+                                 recipe=recipe)
 
     def perform_create(self, serializer):
         recipe = get_object_or_404(Recipe, id=self.kwargs['id'])
         serializer.save(user=self.request.user, recipe=recipe)
-
-    def destroy(self, request, *args, **kwargs):
-        recipe = get_object_or_404(
-            Recipe,
-            pk=self.kwargs['id']
-        )
-        user = request.user
-        if not ChoppingCart.objects.filter(user=user,
-                                           recipe=recipe).exists():
-            return Response(['Этого рецепта нет в списке покупок!'],
-                            status=status.HTTP_400_BAD_REQUEST)
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@api_view(['GET'])
-@permission_classes((IsAuthenticated, ))
-def download_shopping_cart_view(request, ext=EXT):
-    user = '_' + request.user.username
-    content_type = {'.txt': 'text/plain',
-                    '.pdf': 'application/pdf'}
-    recipes = Recipe.objects.filter(recipe_sh__user=request.user)
-    ingredients = IngredientRecipe.objects.filter(
-        recipe__in=recipes).values(
-            'ingredient__name',
-            'ingredient__measurement_unit__name').annotate(
-                amount=Sum('amount')).order_by('ingredient__name', 'amount')
-    file = PREF + FILENAME + user
-    make_file(file, ext, ingredients)
-    return FileResponse(open(file + ext, 'rb'),
-                        as_attachment=True,
-                        content_type=content_type[ext])

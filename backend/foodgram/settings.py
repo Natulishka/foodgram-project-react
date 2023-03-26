@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '4i^(wq$@hz7s7m0wf#y%jstj^m-t!#8)lwjlxd)*tnap^mxh3&'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -163,3 +163,10 @@ DJOSER = {
         {'user': 'api.serializers.CustomUserSerializer',
          'current_user': 'api.serializers.CustomUserSerializer'}
 }
+
+# Make file
+
+FILENAME = 'chopping_cart'
+# EXT = '.txt'
+EXT = '.pdf'
+PREF = MEDIA_ROOT + '/recipes/files/'
