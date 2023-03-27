@@ -1,13 +1,16 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from api.views import (ChoppingCartViewSet, FavoriteViewSet,
+from api.views import (ChoppingCartViewSet, CustomUserViewSet, FavoriteViewSet,
                        IngridientsViewSet, RecipesViewSet, SubscribeViewSet,
                        SubscriptionsViewSet, TagsViewSet)
 
 app_name = 'api'
 
 api_router = DefaultRouter()
+user_router = DefaultRouter()
+
+user_router.register('users', CustomUserViewSet)
 
 api_router.register('ingredients', IngridientsViewSet)
 api_router.register('tags', TagsViewSet)
@@ -29,6 +32,7 @@ urlpatterns = [
              'post': 'create',
              'delete': 'destroy'})),
     path('auth/', include('djoser.urls.authtoken')),
+    path('', include(user_router.urls)),
     path('', include('djoser.urls')),
     path('', include(api_router.urls)),
 ]

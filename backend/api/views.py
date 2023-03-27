@@ -4,7 +4,8 @@ from django.db.models import Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from djoser.views import UserViewSet
+from rest_framework import generics, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 
@@ -23,6 +24,39 @@ from recipes.models import (ChoppingCart, Favorite, Ingredient,
 User = get_user_model()
 
 
+class CustomSerializerContext(generics.GenericAPIView):
+
+    def get_serializer_context(self):
+        subscribtions = None
+        favorites = None
+        shopping_carts = None
+        recipes = None
+        if self.request.user.is_authenticated:
+            subscribtions = set(Subscription.objects.filter(
+                subscriber=self.request.user).values_list(
+                    'author_id', flat=True))
+            favorites = set(Favorite.objects.filter(
+                user=self.request.user).values_list(
+                    'recipe_id', flat=True))
+            shopping_carts = set(ChoppingCart.objects.filter(
+                user=self.request.user).values_list(
+                    'recipe_id', flat=True))
+            recipes = Recipe.objects.filter(author__in=subscribtions)
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self,
+            'subscribtions': subscribtions,
+            'favorites': favorites,
+            'shopping_carts': shopping_carts,
+            'recipes': recipes
+        }
+
+
+class CustomUserViewSet(UserViewSet, CustomSerializerContext):
+    pass
+
+
 class IngridientsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
@@ -39,7 +73,7 @@ class TagsViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ('name',)
 
 
-class RecipesViewSet(viewsets.ModelViewSet):
+class RecipesViewSet(viewsets.ModelViewSet, CustomSerializerContext):
     queryset = Recipe.objects.all()
     serializer_class = RecipesSerializer
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
@@ -77,7 +111,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
                             content_type=content_type[settings.EXT])
 
 
-class SubscriptionsViewSet(ListViewSet):
+class SubscriptionsViewSet(ListViewSet, CustomSerializerContext):
     serializer_class = SubscriptionSerializer
     permission_classes = (IsAuthenticated,)
     ordering = ('author',)
@@ -88,7 +122,7 @@ class SubscriptionsViewSet(ListViewSet):
             id__in=user.subscriber.values('author_id'))
 
 
-class SubscribeViewSet(CreateDestroyViewSet):
+class SubscribeViewSet(CreateDestroyViewSet, CustomSerializerContext):
     queryset = Subscription.objects.all()
     serializer_class = SubscribeSerializer
     permission_classes = (IsAuthenticated,)

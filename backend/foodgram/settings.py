@@ -122,9 +122,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, 'static'),
+# ]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -164,9 +164,9 @@ DJOSER = {
          'current_user': 'api.serializers.CustomUserSerializer'}
 }
 
-# Make file
+# Making file
 
 FILENAME = 'chopping_cart'
-# EXT = '.txt'
-EXT = '.pdf'
+EXT = '.txt'
+# EXT = '.pdf'
 PREF = MEDIA_ROOT + '/recipes/files/'
