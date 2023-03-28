@@ -167,6 +167,6 @@ DJOSER = {
 # Making file
 
 FILENAME = 'chopping_cart'
-EXT = '.txt'
-# EXT = '.pdf'
+# EXT = '.txt'
+EXT = '.pdf'
 PREF = MEDIA_ROOT + '/recipes/files/'

@@ -58,7 +58,7 @@ class CustomUserViewSet(UserViewSet, CustomSerializerContext):
 
 
 class IngridientsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Ingredient.objects.all()
+    queryset = Ingredient.objects.select_related('measurement_unit').all()
     serializer_class = IngredientsSerializer
     filter_backends = (DjangoFilterBackend,)
     pagination_class = None
@@ -74,7 +74,8 @@ class TagsViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipesViewSet(viewsets.ModelViewSet, CustomSerializerContext):
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.select_related(
+        'author').prefetch_related('tags', 'ingredients_recipes').all()
     serializer_class = RecipesSerializer
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
@@ -123,7 +124,8 @@ class SubscriptionsViewSet(ListViewSet, CustomSerializerContext):
 
 
 class SubscribeViewSet(CreateDestroyViewSet, CustomSerializerContext):
-    queryset = Subscription.objects.all()
+    queryset = Subscription.objects.select_related(
+        'subscriber', 'author').all()
     serializer_class = SubscribeSerializer
     permission_classes = (IsAuthenticated,)
     ordering = ('author',)
@@ -144,7 +146,7 @@ class SubscribeViewSet(CreateDestroyViewSet, CustomSerializerContext):
 
 
 class FavoriteViewSet(CreateDestroyViewSet):
-    queryset = Favorite.objects.all()
+    queryset = Favorite.objects.select_related('user', 'recipe').all()
     serializer_class = FavoriteSerializer
     permission_classes = (IsAuthenticated,)
     ordering = ('recipe',)
@@ -165,7 +167,7 @@ class FavoriteViewSet(CreateDestroyViewSet):
 
 
 class ChoppingCartViewSet(CreateDestroyViewSet):
-    queryset = ChoppingCart.objects.all()
+    queryset = ChoppingCart.objects.select_related('user', 'recipe').all()
     serializer_class = ChoppingCartSerializer
     permission_classes = (IsAuthenticated,)
     ordering = ('recipe',)
