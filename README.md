@@ -1,4 +1,15 @@
-# praktikum_new_diplom
+# Foodgram
+
+![example workflow](https://github.com/Natulishka/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)
+
+### Описание
+
+
+### Стек технологий:  
+
+Python 3.7  
+Django 2.2.16  
+DRF 
 
 Развернуть докер контэйнеры::
 ```
@@ -30,4 +41,27 @@ docker rmi infra-web
 Полностью перезапустить web
 ```
 docker stop infra-web-1 && docker rm infra-web-1 && docker rmi infra-web && docker-compose up -d
+```
+
+
+Как скопировать файл по SSH с локальной машины на удалённый сервер
+Как загрузить файл на сервер по SSH? Для этого используйте команду вида:
+```
+scp [путь к файлу] [имя пользователя]@[имя сервера/ip-адрес]:[путь к файлу]
+```
+Пример команды:
+```
+scp /home/test.txt root@123.123.123.123:/directory
+```
+Файл test.txt будет скопирован на хост 123.123.123.123 в директорию «/directory».
+
+
+Обновление системы
+обновите индекс пакетов APT:
+```
+sudo apt update
+```
+Теперь обновите установленные в системе пакеты и установите обновления безопасности:
+```
+sudo apt upgrade -y
 ```

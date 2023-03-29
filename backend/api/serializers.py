@@ -47,7 +47,7 @@ class CustomUserSerializer(UserSerializer):
     def get_is_subscribed(self, obj):
         if not self.context['subscribtions']:
             return False
-        return obj.id in self.context['subscribtions']
+        return obj.id in self.context.get('subscribtions', [])
 
 
 class IngredientsSerializer(serializers.ModelSerializer):
@@ -103,12 +103,12 @@ class RecipesSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         if not self.context['favorites']:
             return False
-        return obj.id in self.context['favorites']
+        return obj.id in self.context.get('favorites', [])
 
     def get_is_in_shopping_cart(self, obj):
         if not self.context['shopping_carts']:
             return False
-        return obj.id in self.context['shopping_carts']
+        return obj.id in self.context.get('shopping_carts', [])
 
 
 class RecipesShortSerializer(RecipesSerializer):
@@ -183,7 +183,7 @@ class SubscriptionSerializer(CustomUserSerializer):
         if request.method == 'POST':
             recipes = obj.recipes.all()
         else:
-            recipes_all = self.context['recipes']
+            recipes_all = self.context.get('recipes', [])
             recipes = recipes_all.filter(author=obj)
         if request:
             recipes_limit = request.GET.get("recipes_limit")
@@ -193,11 +193,7 @@ class SubscriptionSerializer(CustomUserSerializer):
         return serializer.data
 
     def get_recipes_count(self, obj):
-        request = self.context.get('request')
-        if request.method == 'POST':
-            return obj.recipes.count()
-        recipes_all = self.context['recipes']
-        return recipes_all.filter(author=obj).count()
+        return obj.recipes.count()
 
 
 class SubscribeSerializer(serializers.ModelSerializer):

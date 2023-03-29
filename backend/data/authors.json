@@ -18,4 +18,32 @@
     "first_name": "Ренат",
     "last_name": "Агзамов",
     "password": "746GNCsdcnjs"
+  },
+  {
+    "email": "oliver@yandex.ru",
+    "username": "oliver",
+    "first_name": "Джейми",
+    "last_name": "Оливер",
+    "password": "45Fjsnc45"
+  },
+  {
+    "email": "visotskaya@yandex.ru",
+    "username": "visotskaya",
+    "first_name": "Юлия",
+    "last_name": "Высоцкая",
+    "password": "475Hskxlalvn"
+  },
+  {
+    "email": "d_kampo@yandex.ru",
+    "username": "d_kampo",
+    "first_name": "Джино",
+    "last_name": "Д'Акампо",
+    "password": "173KGDscnjn"
+  },
+  {
+    "email": "sirieks@yandex.ru",
+    "username": "sirieks",
+    "first_name": "Фред",
+    "last_name": "Сириекс",
+    "password": "685HsvGcsacn"
   }]
