@@ -20,7 +20,9 @@ services:
       - ./.env
 
   frontend:
-    image: natulishka84/foodgram_fronted:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     restart: always
     volumes:
       - ../frontend/:/app/result_build/
