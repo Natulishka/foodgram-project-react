@@ -10,6 +10,7 @@ services:
   web:
     image: natulishka84/foodgram:latest
     restart: always
+    container_name: web
     volumes:
       - static_value:/app/static/
       - media_value:/app/media/

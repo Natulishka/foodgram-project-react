@@ -173,4 +173,4 @@ DJOSER = {
 FILENAME = 'chopping_cart'
 EXT = '.txt'
 # EXT = '.pdf'
-PREF = MEDIA_ROOT + '/recipes/files/'
+PREF = MEDIA_URL + '/recipes/files/'
