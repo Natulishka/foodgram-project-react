@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Sum
+from django.db.models import Count, Prefetch, Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -120,25 +120,32 @@ class SubscriptionsViewSet(ListViewSet, CustomSerializerContext):
     def get_queryset(self):
         user = self.request.user
         return User.objects.filter(
-            id__in=user.subscriber.values('author_id'))
+            id__in=user.subscriber.values('author_id')).annotate(
+                recipes_count=Count('recipes'))
 
 
 class SubscribeViewSet(CreateDestroyViewSet, CustomSerializerContext):
-    queryset = Subscription.objects.select_related(
-        'subscriber', 'author').all()
     serializer_class = SubscribeSerializer
     permission_classes = (IsAuthenticated,)
     ordering = ('author',)
 
     def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
         author = get_object_or_404(User, pk=self.kwargs['id'])
         subscriber = self.request.user
         if not Subscription.objects.filter(author=author,
                                            subscriber=subscriber).exists():
             raise BadRequestException(
                 {'errors': 'Вы не подписаны на этого автора!'})
-        return get_object_or_404(Subscription, subscriber=subscriber,
+        return get_object_or_404(queryset, subscriber=subscriber,
                                  author=author)
+
+    def get_queryset(self):
+        user_query = User.objects.all().annotate(
+            recipes_count=Count('recipes'))
+        return Subscription.objects.select_related(
+            'subscriber').prefetch_related(Prefetch('author',
+                                                    queryset=user_query))
 
     def perform_create(self, serializer):
         author = get_object_or_404(User, id=self.kwargs['id'])

@@ -46,6 +46,9 @@ class Recipe(models.Model):
     tags = models.ManyToManyField(Tag, related_name='recipes')
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='recipes')
+    ingredients = models.ManyToManyField(Ingredient,
+                                         through='IngredientRecipe',
+                                         related_name='recipes')
 
     def __str__(self):
         return self.name
@@ -62,7 +65,8 @@ class IngredientRecipe(models.Model):
     amount = models.IntegerField(validators=[MinValueValidator(1)])
 
     def __str__(self):
-        return f'{self.ingredient} {self.recipe}'
+        return (f'{self.recipe}: '
+                f'({self.ingredient}) - {self.amount}')
 
     class Meta:
         ordering = ['-recipe']

@@ -1,8 +1,9 @@
 from django.contrib import admin
+from django.utils.safestring import mark_safe
 
 from recipes.models import (ChoppingCart, Favorite, Ingredient,
                             IngredientRecipe, MeasurementUnit, Recipe,
-                            Subscription, Tag, TagRecipe)
+                            Subscription, Tag)
 
 
 class MeasurementUnitAdmin(admin.ModelAdmin):
@@ -24,24 +25,24 @@ class TagAdmin(admin.ModelAdmin):
     ordering = ('slug',)
 
 
-class IngredientRecipeAdmin(admin.ModelAdmin):
-    readonly_fields = ('measurement_unit',)
-    list_display = ('pk', 'recipe', 'ingredient', 'measurement_unit', 'amount')
-    empty_value_display = '-пусто-'
-    ordering = ('recipe',)
-
-    def measurement_unit(self, obj):
-        return obj.ingredient.measurement_unit.name
+class IngredientRecipeInline(admin.TabularInline):
+    model = IngredientRecipe
+    extra = 0
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    readonly_fields = ('_ingredients', 'in_favorite')
-    list_display = ('pk', 'name', 'pub_date', 'text', 'cooking_time', 'image',
+    readonly_fields = ('in_favorite', '_image')
+    list_display = ('pk', 'name', 'pub_date', 'text', 'cooking_time', '_image',
                     'author', '_tags', '_ingredients')
     empty_value_display = '-пусто-'
     filter_horizontal = ('tags',)
     list_filter = ('name', 'author', 'tags')
-    ordering = ('pub_date',)
+    ordering = ('-pub_date',)
+    inlines = [IngredientRecipeInline]
+
+    def _image(self, obj):
+        return mark_safe(f'<img src="{obj.image.url}" '
+                         f'style="max-height: 100px;">')
 
     def _tags(self, obj):
         return ", ".join([t.slug for t in obj.tags.all()])
@@ -77,8 +78,6 @@ admin.site.register(MeasurementUnit, MeasurementUnitAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Recipe, RecipeAdmin)
-admin.site.register(IngredientRecipe, IngredientRecipeAdmin)
-admin.site.register(TagRecipe)
 admin.site.register(Subscription, SubscriptionAdmin)
 admin.site.register(Favorite, FavoriteAdmin)
 admin.site.register(ChoppingCart, ChoppingCartAdmin)

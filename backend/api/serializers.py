@@ -4,6 +4,7 @@ import webcolors
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import transaction
+from django.db.models import Count, Prefetch
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
@@ -171,7 +172,7 @@ class RecipesPostSerializer(RecipesSerializer):
 
 class SubscriptionSerializer(CustomUserSerializer):
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField()
 
     class Meta:
         model = User
@@ -191,9 +192,6 @@ class SubscriptionSerializer(CustomUserSerializer):
                 recipes = recipes[:int(recipes_limit)]
         serializer = RecipesShortSerializer(recipes, many=True)
         return serializer.data
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
@@ -221,6 +219,13 @@ class SubscribeSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
+        user_query = User.objects.all().annotate(
+            recipes_count=Count('recipes'))
+        sub_query = Subscription.objects.select_related(
+            'subscriber').prefetch_related(Prefetch('author',
+                                                    queryset=user_query))
+        instance = get_object_or_404(sub_query, subscriber=instance.subscriber,
+                                     author=instance.author)
         serializer = SubscriptionSerializer(instance.author,
                                             context=self.context)
         return serializer.data

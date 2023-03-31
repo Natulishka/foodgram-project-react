@@ -1,17 +1,27 @@
 [
     {
         "name": "Завтрак",
-        "color": "#E26C2D",
+        "color": "#9EFD38",
         "slug": "breakfast"
     },
     {
         "name": "Обед",
-        "color": "#c8ff3b",
+        "color": "#00B0BC",
         "slug": "lunch"
     },
     {
         "name": "Ужин",
-        "color": "#228B22",
+        "color": "#FAE500",
         "slug": "dinner"
+    },
+    {
+        "name": "Десерт",
+        "color": "#D79FC7",
+        "slug": "dessert"
+    },
+    {
+        "name": "Закуска",
+        "color": "#A020F0",
+        "slug": "snack"
     }
 ]
